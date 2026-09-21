@@ -1,18 +1,44 @@
-const menu = {
-  cafe: [['Espresso da Casa','R$ 9','Intenso, doce e cremoso','1495474472287-4d71bcdd2085'],['Coado V60','R$ 14','Escolha o grão do dia','1514432324607-a09d9b4aefdd'],['Cappuccino','R$ 16','Leite vaporizado e canela','1498804103079-a6351b050096'],['Flat White','R$ 17','Duplo espresso, leite sedoso','1497636577773-f1231844b336']],
-  comida: [['Pão de queijo','R$ 10','Quentinho, porção com 6','1499636136210-6f4ee915583e'],['Croissant','R$ 14','Manteiga francesa','1509440159596-0249088772ff'],['Bolo da casa','R$ 12','Sabor do dia','1578985545062-69928b1d9587'],['Toast de avocado','R$ 23','Pão artesanal e limão','1525351484163-7529414344d8']],
-  gelado: [['Cold brew','R$ 16','Extraído por 18 horas','1461023058943-07fcbe16d735'],['Iced latte','R$ 17','Leite e espresso gelado','1495474472287-4d71bcdd2085'],['Tônica cítrica','R$ 18','Café, tônica e laranja','1501339847302-ac426a4a7cbb'],['Affogato','R$ 19','Sorvete de baunilha e café','1461988320302-91bde64fc8e4']]
-};
-const grid = document.querySelector('#menuGrid');
-function renderMenu(kind='cafe') { grid.innerHTML = menu[kind].map(([name,price,text,image]) => `<article class="menu-card"><div class="card-photo"><img src="https://images.unsplash.com/photo-${image}?auto=format&fit=crop&w=700&q=82" alt="${name}" loading="lazy"></div><div><p>${price}</p><h3>${name}</h3><small>${text}</small></div></article>`).join(''); }
-renderMenu();
-document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active')); button.classList.add('active'); renderMenu(button.dataset.tab); }));
-const dialog = document.querySelector('#booking');
-document.querySelectorAll('[data-reserve]').forEach(button => button.addEventListener('click', () => dialog.showModal()));
-document.querySelector('.close').addEventListener('click', () => dialog.close());
-document.querySelector('#bookingForm').addEventListener('submit', event => { event.preventDefault(); event.currentTarget.hidden = true; dialog.querySelector('.confirmation').hidden = false; });
-document.querySelector('.menu-toggle').addEventListener('click', event => { const nav = document.querySelector('nav'); nav.classList.toggle('open'); event.currentTarget.setAttribute('aria-expanded', nav.classList.contains('open')); });
-document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => document.querySelector('nav').classList.remove('open')));
-const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { setTimeout(() => entry.target.classList.add('visible'), Number(entry.target.dataset.delay || 0)); observer.unobserve(entry.target); } }), {threshold: .12});
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-document.addEventListener('mousemove', event => { const glow = document.querySelector('.cursor-glow'); glow.style.left = `${event.clientX}px`; glow.style.top = `${event.clientY}px`; });
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    entry.target.classList.add('visible');
+    observer.unobserve(entry.target);
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target) return;
+    event.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+const hero = document.querySelector('.hero');
+const canvas = document.querySelector('#hero-canvas');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (window.THREE && canvas && !reducedMotion) {
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  camera.position.z = 7;
+  const group = new THREE.Group();
+  scene.add(group);
+  [[-2.5, 1.3, .55], [2.7, .5, .35], [1.6, -1.8, .42], [-1.1, -2.2, .25]].forEach(([x, y, scale]) => {
+    const material = new THREE.MeshBasicMaterial({ color: 0xd5aa6d, transparent: true, opacity: 0.28, wireframe: true });
+    const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(scale, 2), material);
+    mesh.position.set(x, y, 0);
+    group.add(mesh);
+  });
+  const resize = () => { const { width, height } = hero.getBoundingClientRect(); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); };
+  resize(); window.addEventListener('resize', resize);
+  let pointerX = 0, pointerY = 0;
+  hero.addEventListener('pointermove', (event) => { pointerX = (event.clientX / window.innerWidth - .5) * .35; pointerY = (event.clientY / window.innerHeight - .5) * .2; });
+  const render = (time) => { group.rotation.y += (pointerX - group.rotation.y) * .018; group.rotation.x += (pointerY - group.rotation.x) * .018; group.children.forEach((mesh, index) => { mesh.rotation.x = time * .00018 * (index + 1); mesh.rotation.y = time * .00012 * (index + 1); }); renderer.render(scene, camera); requestAnimationFrame(render); };
+  requestAnimationFrame(render);
+}

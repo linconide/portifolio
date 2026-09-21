@@ -1,7 +1,5 @@
-# Casa do Grão
+# Espaço Reserva
 
-Landing page responsiva para uma cafeteria fictícia, feita com HTML, CSS e JavaScript puro.
+Landing page para o Espaço Reserva, em Paracambi/RJ.
 
-## Publicação
-
-O ponto de entrada é `index.html`. Para publicar no GitHub Pages, em **Settings → Pages**, selecione a branch principal e a pasta `/ (root)`.
+Contato: (21) 97423-9394 · Rua Salomão José Basílio, 280 — Amapá, Paracambi/RJ.
